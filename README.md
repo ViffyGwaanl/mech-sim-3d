@@ -8,6 +8,16 @@
 
 ![洗烘一体机三种烘干技术 3D 对比界面 / Interactive 3D washer-dryer comparison](docs/preview.png)
 
+## 联系与关注 / Connect
+
+欢迎扫码关注微信公众号，或添加个人微信。<br>
+Scan the QR codes to follow the official account or add Gwaanl on WeChat.
+
+| 微信公众号 / Official Account | 个人微信 / Personal WeChat |
+|:---:|:---:|
+| <img src="docs/wechat-official-account.jpg" alt="Page & Pause 微信公众号二维码 / Official Account QR code" width="300"> | <img src="docs/wechat-personal.png" alt="Gwaanl 个人微信二维码 / Personal WeChat QR code" width="220"> |
+| 微信扫码关注 Page & Pause<br>Scan with WeChat to follow Page & Pause | 微信扫码添加 Gwaanl<br>Scan with WeChat to add Gwaanl |
+
 ---
 
 ## 中文
@@ -24,7 +34,6 @@
 - 支持自由视角、预设镜头、剖切、外壳半透明、爆炸图和系统显隐。
 - 提供 140 个可拾取零件与 84 条中英双语零件档案。
 - 包含分站讲解、自动出题以及 22 步拆解/装配演示。
-- 内置“联系与关注”弹窗，可扫码关注公众号或添加个人微信。
 - Three.js r160 已内联，无运行时 CDN 依赖，下载后双击即可打开。
 
 ### 演示工况与数据边界
@@ -76,7 +85,6 @@ This is an offline, single-file 3D experience that compares three washer-dryer t
 - Explore preset cameras, section cuts, transparent housings, exploded views, and assembly visibility controls.
 - Inspect 140 selectable parts backed by 84 bilingual Chinese-English component profiles.
 - Follow guided learning stations, take automatically generated quizzes, and play a 22-step teardown or reassembly sequence.
-- Open the built-in Connect panel to scan the official-account or personal WeChat QR code.
 - Run entirely offline: Three.js r160 is embedded and no runtime CDN is required.
 
 ### Scenario and data scope
