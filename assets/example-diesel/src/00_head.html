@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>四冲程柴油机 · 高精度 3D 交互仿真 | Inline-4 Turbo Diesel Interactive Simulator</title>
+<style>
+:root{
+  --bg:#080a0d; --bg2:#0e1319;
+  --panel:rgba(13,17,23,.86); --panel2:rgba(20,26,34,.9);
+  --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.06);
+  --tx:#e8eef5; --tx2:#93a2b3; --tx3:#5f6f80;
+  --acc:#33c7d6; --acc2:#7de3ee;
+  --amber:#f0a63c; --red:#e2564a; --blue:#4b9df0; --green:#4dc98a; --violet:#a98cf0;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:13px}
+canvas{display:block;outline:none}
+#app{position:fixed;inset:0}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;background:radial-gradient(ellipse at 50% 45%,#141b24 0%,#080a0d 70%);z-index:99;transition:opacity .6s}
+#loading .ttl{font-size:15px;letter-spacing:.32em;color:var(--acc);font-weight:500}
+#loading .sub{font-size:11px;color:var(--tx3);letter-spacing:.18em;font-family:var(--mono)}
+#loading .bar{width:280px;height:2px;background:rgba(255,255,255,.08);overflow:hidden;border-radius:2px}
+#loading .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
+
+.panel{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:11px;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);box-shadow:0 10px 40px rgba(0,0,0,.55)}
+.panel h4{margin:0;padding:9px 12px 7px;font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--tx2);border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center}
+.panel h4 em{font-style:normal;font-size:9px;color:var(--tx3);letter-spacing:.08em;font-family:var(--mono)}
+.pad{padding:10px 12px}
+
+/* ---------- title ---------- */
+#brand{top:14px;left:14px;padding:11px 15px 12px;min-width:250px}
+#brand .t1{font-size:15px;font-weight:600;letter-spacing:.04em}
+#brand .t2{font-size:9.5px;color:var(--tx3);letter-spacing:.15em;font-family:var(--mono);margin-top:3px}
+#brand .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.chip{font-family:var(--mono);font-size:9px;padding:2.5px 6px;border-radius:4px;background:rgba(51,199,214,.10);border:1px solid rgba(51,199,214,.24);color:var(--acc2);letter-spacing:.04em}
+
+/* ---------- left control stack ---------- */
+#left{position:absolute;top:118px;left:14px;bottom:14px;width:252px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:9px;padding-right:3px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+#left::-webkit-scrollbar{width:5px}#left::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+#left .panel{position:relative;top:auto;left:auto;flex:none}
+
+.row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.row:last-child{margin-bottom:0}
+.row label{flex:0 0 52px;font-size:11px;color:var(--tx2)}
+.row .val{flex:0 0 62px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--acc2)}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--acc) 0%,var(--acc) var(--p,50%),rgba(255,255,255,.13) var(--p,50%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#eaf6f8;border:2px solid var(--acc);cursor:pointer;box-shadow:0 0 8px rgba(51,199,214,.55)}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:#eaf6f8;border:2px solid var(--acc);cursor:pointer}
+
+.btns{display:flex;flex-wrap:wrap;gap:5px}
+button{font-family:var(--sans);font-size:11px;color:var(--tx2);background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:6px;padding:6px 9px;cursor:pointer;transition:.14s;letter-spacing:.02em}
+button:hover{background:rgba(51,199,214,.13);color:var(--acc2);border-color:rgba(51,199,214,.38)}
+button.on{background:rgba(51,199,214,.20);color:#dffbff;border-color:rgba(51,199,214,.62);box-shadow:inset 0 0 12px rgba(51,199,214,.12)}
+button.wide{flex:1 1 auto}
+button kbd{font-family:var(--mono);font-size:8.5px;opacity:.5;margin-left:4px}
+
+.tog{display:flex;align-items:center;gap:7px;padding:4.5px 2px;cursor:pointer;font-size:11.5px;color:var(--tx2);border-radius:5px}
+.tog:hover{color:var(--tx)}
+.tog i{width:11px;height:11px;border-radius:3px;border:1px solid rgba(255,255,255,.26);flex:none;position:relative;transition:.14s}
+.tog.on i{background:var(--acc);border-color:var(--acc);box-shadow:0 0 8px rgba(51,199,214,.5)}
+.tog.on i:after{content:"";position:absolute;left:3px;top:.5px;width:3px;height:6.5px;border:solid #06222a;border-width:0 1.6px 1.6px 0;transform:rotate(42deg)}
+.tog em{font-style:normal;margin-left:auto;font-family:var(--mono);font-size:8.5px;color:var(--tx3)}
+.swatch{width:9px;height:9px;border-radius:2px;flex:none}
+
+/* ---------- right gauges ---------- */
+#right{position:absolute;top:14px;right:14px;width:238px;display:flex;flex-direction:column;gap:9px;max-height:calc(100% - 28px);overflow-y:auto;scrollbar-width:thin}
+#right::-webkit-scrollbar{width:5px}#right::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+#right .panel{position:relative;top:auto;right:auto;flex:none}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.g{background:rgba(255,255,255,.028);border:1px solid var(--line2);border-radius:7px;padding:7px 8px}
+.g .k{font-size:9px;color:var(--tx3);letter-spacing:.06em;display:flex;justify-content:space-between}
+.g .k b{font-weight:400;font-family:var(--mono);font-size:8px;opacity:.65}
+.g .v{font-family:var(--mono);font-size:16px;color:var(--tx);margin-top:2px;line-height:1.15;font-variant-numeric:tabular-nums}
+.g .v small{font-size:9px;color:var(--tx3);margin-left:2px}
+.g .m{height:2px;background:rgba(255,255,255,.09);border-radius:2px;margin-top:5px;overflow:hidden}
+.g .m i{display:block;height:100%;width:0%;border-radius:2px;transition:width .18s linear}
+
+#dial{width:100%;height:88px;display:block}
+#pv{width:100%;height:82px;display:block;border-radius:6px;background:rgba(255,255,255,.022)}
+
+.cylrow{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-family:var(--mono);font-size:9.5px}
+.cylrow b{font-weight:500;color:var(--tx3);flex:0 0 24px}
+.cylbar{flex:1;height:13px;border-radius:3px;background:rgba(255,255,255,.05);position:relative;overflow:hidden;display:flex}
+.cylbar span{flex:1;position:relative;border-right:1px solid rgba(0,0,0,.35)}
+.cylbar span:last-child{border-right:none}
+.cylbar i{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 7px #fff;left:0;border-radius:2px}
+.cylrow u{text-decoration:none;flex:0 0 46px;text-align:right;font-size:9px}
+
+/* ---------- info card ---------- */
+#card{position:absolute;pointer-events:none;width:322px;background:var(--panel2);border:1px solid rgba(51,199,214,.34);border-radius:11px;padding:0;opacity:0;transform:translateY(6px) scale(.98);transition:opacity .13s,transform .13s;z-index:60;box-shadow:0 16px 50px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.4)}
+#card.show{opacity:1;transform:none}
+#card .hd{padding:10px 12px 9px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,rgba(51,199,214,.10),transparent)}
+#card .nz{font-size:14px;font-weight:600;letter-spacing:.02em}
+#card .ne{font-family:var(--mono);font-size:10px;color:var(--acc2);opacity:.85;margin-top:2px;letter-spacing:.03em}
+#card .sys{position:absolute;right:10px;top:10px;font-size:9px;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
+#card .bd{padding:9px 12px 11px}
+#card .sec{margin-bottom:8px}
+#card .sec:last-child{margin-bottom:0}
+#card .lb{font-size:9px;color:var(--tx3);letter-spacing:.14em;margin-bottom:3px}
+#card .tx{font-size:11.5px;line-height:1.55;color:var(--tx)}
+#card .tx b{color:var(--acc2);font-weight:500}
+#card .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:10.5px}
+#card .kv dt{color:var(--tx2)}
+#card .kv dd{margin:0;font-family:var(--mono);color:var(--tx);text-align:right;font-variant-numeric:tabular-nums}
+#card .st{background:rgba(240,166,60,.10);border:1px solid rgba(240,166,60,.28);border-radius:7px;padding:6px 9px;font-family:var(--mono);font-size:10.5px;color:#ffd79a;line-height:1.5}
+#card .st b{color:#fff;font-weight:600}
+
+/* ---------- legend / hud ---------- */
+#legend{left:280px;bottom:14px;padding:9px 12px;display:flex;gap:16px;align-items:flex-start}
+#legend .col{display:flex;flex-direction:column;gap:4px}
+#legend .li{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--tx2);white-space:nowrap}
+#legend .li i{width:14px;height:4px;border-radius:2px;flex:none}
+#legend .li u{text-decoration:none;font-family:var(--mono);font-size:8.5px;color:var(--tx3)}
+#hud{position:absolute;right:14px;bottom:14px;font-family:var(--mono);font-size:9.5px;color:var(--tx3);text-align:right;line-height:1.6;pointer-events:none;text-shadow:0 1px 3px #000}
+#hud b{color:var(--acc2);font-weight:400}
+
+/* ---------- guide ---------- */
+#guide{position:fixed;inset:0;background:rgba(4,6,9,.74);backdrop-filter:blur(7px);z-index:80;display:flex;align-items:center;justify-content:center}
+#guide .box{width:min(760px,92vw);background:var(--panel2);border:1px solid var(--line);border-radius:15px;padding:24px 26px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+#guide h2{margin:0 0 3px;font-size:19px;letter-spacing:.03em}
+#guide .sb{font-family:var(--mono);font-size:10.5px;color:var(--tx3);letter-spacing:.1em;margin-bottom:17px}
+#guide .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px 26px}
+#guide .it{display:flex;gap:10px;align-items:flex-start}
+#guide .it k{flex:0 0 76px;font-family:var(--mono);font-size:9.5px;color:var(--acc2);background:rgba(51,199,214,.10);border:1px solid rgba(51,199,214,.22);border-radius:5px;padding:3px 5px;text-align:center;letter-spacing:.02em}
+#guide .it p{margin:2px 0 0;font-size:11.5px;color:var(--tx2);line-height:1.45}
+#guide .ft{margin-top:19px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line2);padding-top:14px}
+#guide .ft span{font-size:10.5px;color:var(--tx3);line-height:1.5}
+#guide .ft button{padding:9px 22px;font-size:12.5px;background:rgba(51,199,214,.20);border-color:rgba(51,199,214,.55);color:#dffbff}
+#help{position:absolute;left:14px;bottom:14px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}
+.hidden{display:none!important}
+#left.off,#right.off,#brand.off,#legend.off,#hud.off,#help.off{opacity:0;pointer-events:none;transition:opacity .2s}
+@media (max-width:900px){#left{width:206px}#right{width:186px}#legend{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="loading"><div class="ttl">DIESEL ENGINE SIMULATOR</div><div class="bar"><i id="lbar"></i></div><div class="sub" id="lmsg">初始化渲染器…</div></div>
+
+<div class="panel" id="brand">
+  <div class="t1">四冲程柴油机 · 3D 交互仿真</div>
+  <div class="t2">INLINE-4 TURBO DIESEL · CUTAWAY SIMULATOR</div>
+  <div class="chips">
+    <span class="chip">直列四缸</span><span class="chip">Ø102 × 120 mm</span><span class="chip">3.92 L</span>
+    <span class="chip">ε = 17.5:1</span><span class="chip">OHV 8V</span><span class="chip">1-3-4-2</span>
+  </div>
+</div>
+
+<div id="left">
+  <div class="panel"><h4>运行控制 <em>MOTION</em></h4><div class="pad">
+    <div class="btns" style="margin-bottom:10px">
+      <button id="bPlay" class="on wide">⏸ 暂停<kbd>Space</kbd></button>
+      <button id="bStep">单步 +5°</button>
+    </div>
+    <div class="row"><label>转速</label><input type="range" id="sRpm" min="450" max="2600" step="10" value="1200"><div class="val" id="vRpm">1200 r/min</div></div>
+    <div class="row"><label>负荷</label><input type="range" id="sLoad" min="0" max="100" step="1" value="45"><div class="val" id="vLoad">45 %</div></div>
+    <div class="row"><label>演示倍速</label><input type="range" id="sTime" min="2" max="200" step="1" value="18"><div class="val" id="vTime">0.18 ×</div></div>
+    <div class="row"><label>曲轴角</label><input type="range" id="sAng" min="0" max="720" step="1" value="0"><div class="val" id="vAng">0 °</div></div>
+  </div></div>
+
+  <div class="panel"><h4>视图与剖切 <em>VIEW</em></h4><div class="pad">
+    <div class="btns" style="margin-bottom:9px">
+      <button data-view="free" class="on">自由<kbd>1</kbd></button><button data-view="side">侧视<kbd>2</kbd></button>
+      <button data-view="top">俯视<kbd>3</kbd></button><button data-view="front">正视<kbd>4</kbd></button>
+      <button data-view="section">剖视<kbd>5</kbd></button><button data-view="valve">配气</button>
+      <button data-view="crank">曲柄</button><button data-view="turbo">增压</button>
+    </div>
+    <div class="tog" id="tClip"><i></i>剖切模式<em>C</em></div>
+    <div class="row" id="rClip" style="margin-top:2px"><label>剖面</label><input type="range" id="sClip" min="-100" max="120" step="1" value="10"><div class="val" id="vClip">10 mm</div></div>
+    <div class="tog" id="tGhost"><i></i>机体半透明<em>X</em></div>
+    <div class="tog" id="tFlow"><i></i>油液/气流粒子<em>F</em></div>
+    <div class="tog" id="tPath"><i></i>流道半透明流线<em>P</em></div>
+    <div class="row" style="margin-top:5px"><label>爆炸图</label><input type="range" id="sExp" min="0" max="100" step="1" value="0"><div class="val" id="vExp">0 %</div></div>
+  </div></div>
+
+  <div class="panel"><h4>零部件系统显隐 <em>ASSEMBLIES</em></h4><div class="pad" id="sysList"></div></div>
+
+  <div class="panel"><h4>渲染 <em>RENDER</em></h4><div class="pad">
+    <div class="tog on" id="tShadow"><i></i>阴影</div>
+    <div class="tog on" id="tGrid"><i></i>地面网格</div>
+    <div class="tog on" id="tLabels"><i></i>三维标注</div>
+    <div class="tog" id="tRot"><i></i>自动环绕</div>
+    <div class="tog" id="tInvX"><i></i>反转拖拽 · 左右<em>视角轴</em></div>
+    <div class="tog" id="tInvY"><i></i>反转拖拽 · 上下<em>视角轴</em></div>
+    <div class="tog" id="tInvZoom"><i></i>反转滚轮缩放<em>滚轮</em></div>
+  </div></div>
+</div>
+
+<div id="right">
+  <div class="panel"><h4>工况仪表 <em>TELEMETRY</em></h4><div class="pad">
+    <canvas id="dial" width="440" height="176"></canvas>
+    <div class="gg" style="margin-top:8px">
+      <div class="g"><div class="k">冷却水温<b>°C</b></div><div class="v" id="gT">—</div><div class="m"><i id="mT" style="background:var(--red)"></i></div></div>
+      <div class="g"><div class="k">主油道油压<b>bar</b></div><div class="v" id="gP">—</div><div class="m"><i id="mP" style="background:var(--amber)"></i></div></div>
+      <div class="g"><div class="k">增压压力<b>bar</b></div><div class="v" id="gB">—</div><div class="m"><i id="mB" style="background:var(--blue)"></i></div></div>
+      <div class="g"><div class="k">排气温度<b>°C</b></div><div class="v" id="gE">—</div><div class="m"><i id="mE" style="background:var(--violet)"></i></div></div>
+      <div class="g"><div class="k">缸内压力<b>bar</b></div><div class="v" id="gC">—</div><div class="m"><i id="mC" style="background:var(--acc)"></i></div></div>
+      <div class="g"><div class="k">输出扭矩<b>N·m</b></div><div class="v" id="gQ">—</div><div class="m"><i id="mQ" style="background:var(--green)"></i></div></div>
+    </div>
+  </div></div>
+
+  <div class="panel"><h4>四缸相位 <em>PHASE 1-3-4-2</em></h4><div class="pad" id="cyls"></div></div>
+
+  <div class="panel"><h4>示功图 p–θ <em>INDICATOR</em></h4><div class="pad"><canvas id="pv" width="440" height="240"></canvas>
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:8.5px;color:var(--tx3);margin-top:4px"><span>进气 ▸ 压缩 ▸ 做功 ▸ 排气</span><span id="pvmax">—</span></div>
+  </div></div>
+</div>
+
+<div class="panel" id="legend"></div>
+<div id="hud"></div>
+<button id="help" class="panel">?</button>
+<div id="card"></div>
+
+<div id="guide"><div class="box">
+  <h2>操作引导</h2><div class="sb">HOW TO USE · 四冲程柴油机高精度交互仿真</div>
+  <div class="grid">
+    <div class="it"><k>左键拖拽</k><p>旋转视角（环绕整机）</p></div>
+    <div class="it"><k>滚轮 / 双指</k><p>缩放，可推进到缸内观察活塞与气门</p></div>
+    <div class="it"><k>右键拖拽</k><p>平移视角；双击零件可聚焦到该零件</p></div>
+    <div class="it"><k>鼠标悬停</k><p>弹出零件信息卡：中英文名称、材料工艺、功能、关键参数与实时运动状态</p></div>
+    <div class="it"><k>Space</k><p>暂停 / 继续；暂停后可用「曲轴角」滑块逐度检查相位</p></div>
+    <div class="it"><k>C / X</k><p>剖切模式 / 机体半透明，观察油道、气道与运动干涉</p></div>
+    <div class="it"><k>1 – 5</k><p>自由 / 侧视 / 俯视 / 正视 / 剖视 预设视角</p></div>
+    <div class="it"><k>F · P · E · H</k><p>油液气流粒子 · 流线 · 爆炸图 · 隐藏界面</p></div>
+    <div class="it"><k>T &nbsp;·&nbsp; [ ]</k><p>单缸拆解动画：按真实检修顺序 17 步逐件分离，[ ] 单步前后翻</p></div>
+    <div class="it"><k>拖拽反转</k><p>方向不合手感？左侧「渲染」面板可分别反转左右 / 上下视角轴与滚轮缩放</p></div>
+    <div class="it"><k>G · Q</k><p>讲解模式：9 站带你看懂整机 · 考一考：从零件档案自动出题自测</p></div>
+  </div>
+  <div class="ft"><span>本模型按 Ø102 × 120 mm 直列四缸涡轮增压柴油机（3.92 L，ε=17.5:1，OHV 顶置气门下置凸轮轴）实测量级建模；<br>活塞位移采用精确曲柄滑块方程，气门升程由凸轮型线经摇臂比反算，相位与点火顺序 1-3-4-2 严格同步。</span><button id="bGo">开 始</button></div>
+</div></div>
+
+<script>(function(){var w=console.warn;console.warn=function(){var a=arguments[0];if(typeof a==="string"&&a.indexOf("build/three.js")>=0)return;w.apply(console,arguments);};})();</script>
+<script id="threelib">
